@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const GEMINI_API_KEY = 'AIzaSyDQ_WsE_yM3JgzC7B1wqON7wLb5jWYgrZA';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMMA_API_KEY = process.env.GEMMA_API_KEY;
+const GEMMA_API_URL = 'https://api.e2b.dev/v1/models/gemma-3n-e2b-it/generate'; // TODO: Confirm this endpoint
 
 const SYSTEM_PROMPT = `You are my personal mental health companion — not here to diagnose me or fix me, but to sit beside me when I feel heavy, lost, weird, or like a tired potato with too many tabs open in my brain.
 
@@ -33,36 +33,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
   try {
-    const response = await fetch(GEMINI_API_URL, {
+    // TODO: Confirm the request body and headers for Gemma 3n E2B
+    const response = await fetch(GEMMA_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-goog-api-key': GEMINI_API_KEY,
+        'Authorization': `Bearer ${GEMMA_API_KEY}`,
       },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: message }] }],
-        generationConfig: {
-          temperature: 0.7,
-        },
-        systemInstruction: {
-          role: 'system',
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
+        prompt: `${SYSTEM_PROMPT}\nUser: ${message}\nCompanion:`,
+        // Add any other required fields here
       }),
       signal: controller.signal,
     });
     clearTimeout(timeout);
     if (!response.ok) {
-      return res.status(response.status).json({ error: `Gemini API error: ${response.status} - ${response.statusText}` });
+      return res.status(response.status).json({ error: `Gemma API error: ${response.status} - ${response.statusText}` });
     }
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
+    // TODO: Confirm the response field for the model's reply
+    const text = data?.output || 'Sorry, I could not generate a response.';
     return res.status(200).json({ text });
   } catch (error: any) {
     clearTimeout(timeout);
     if (error.name === 'AbortError') {
-      return res.status(504).json({ error: 'Gemini API request timed out.' });
+      return res.status(504).json({ error: 'Gemma API request timed out.' });
     }
-    return res.status(500).json({ error: 'Failed to connect to Gemini API.' });
+    return res.status(500).json({ error: 'Failed to connect to Gemma API.' });
   }
 } 
