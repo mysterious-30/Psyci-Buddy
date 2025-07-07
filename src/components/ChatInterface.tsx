@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatMessage } from '../types';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -24,6 +24,21 @@ async function fetchAIResponse(message: string): Promise<string> {
 export default function ChatInterface() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+
+  // Send the first bot message on mount
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([
+        {
+          id: Date.now() + '-psyci-welcome',
+          sender: 'psyci',
+          content: 'Hi, I\'m Psyci Buddy! How are you feeling today?',
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSend = async (content: string) => {
     const userMsg: ChatMessage = {
