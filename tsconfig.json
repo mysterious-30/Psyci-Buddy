@@ -30,7 +30,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/pages/api/testA4F.js"  ],
   "exclude": [
     "node_modules"
   ]
