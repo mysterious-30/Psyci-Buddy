@@ -4,12 +4,14 @@ import { ChatMessage } from '../types';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
 
-async function fetchAIResponse(message: string): Promise<string> {
+const INITIAL_GREETING = "Hi, I'm Psyci Buddy! How are you feeling today?";
+
+async function fetchAIResponse(history: { role: string, text: string }[]): Promise<string> {
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ history }),
     });
     if (!res.ok) {
       throw new Error('AI service error');
@@ -32,7 +34,7 @@ export default function ChatInterface() {
         {
           id: Date.now() + '-psyci-welcome',
           sender: 'psyci',
-          content: 'Hi, I\'m Psyci Buddy! How are you feeling today?',
+          content: INITIAL_GREETING,
           timestamp: Date.now(),
         },
       ]);
@@ -50,7 +52,12 @@ export default function ChatInterface() {
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
     setTimeout(async () => {
-      const aiText = await fetchAIResponse(content);
+      // Send initial greeting and user message as history
+      const history = [
+        { role: 'psyci', text: INITIAL_GREETING },
+        { role: 'user', text: content }
+      ];
+      const aiText = await fetchAIResponse(history);
       const psyciMsg: ChatMessage = {
         id: Date.now() + '-psyci',
         sender: 'psyci',
